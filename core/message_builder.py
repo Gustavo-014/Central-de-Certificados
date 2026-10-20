@@ -14,10 +14,27 @@ STATUS_SECTION_EMOJI = {
     "CERTIFICADO EXPIRA EM 30 DIAS": "📅",
 }
 
+# Mapeamento de label amigável (para o cliente) por status normalizado
+STATUS_SECTION_LABEL = {
+    "ENTRAR EM CONTATO, CERTIFICADO EXPIRADO": "Certificados expirados:",
+    "ENTRAR EM CONTATO, EXPIRA HOJE!": "Certificados expira hoje:",
+    "ENTRAR EM CONTATO, EXPIRA EM 5 DIAS": "Certificados expiram em 5 dias:",
+    "ENTRAR EM CONTATO, EXPIRA EM 15 DIAS": "Certificados expiram em 15 dias:",
+    "CERTIFICADO EXPIRA EM 30 DIAS": "Certificados expiram em 30 dias:",
+}
+
 
 def _get_section_emoji(status_norm: str) -> str:
     """Retorna emoji para o cabeçalho de seção do status."""
     return STATUS_SECTION_EMOJI.get(status_norm, "⚠️")
+
+
+def _get_section_label(status_norm: str, status_raw: str) -> str:
+    """Retorna o label amigável para o cabeçalho da seção multi-status.
+    
+    Usa o mapeamento de labels amigáveis; se não encontrado, usa o status bruto.
+    """
+    return STATUS_SECTION_LABEL.get(status_norm, status_raw)
 
 
 def format_clientes_cnpjs(group: CertificateGroup) -> str:
@@ -58,12 +75,13 @@ def build_status_sections(group: CertificateGroup) -> str:
     Cada seção contém um cabeçalho com emoji e status, seguido dos
     blocos de Cliente/CNPJ/Vencimento correspondentes.
     """
+    
+
     sections = []
     for sg in group.sub_groups:
-        emoji = _get_section_emoji(sg.status_normalizado)
-        header = f"{emoji} {sg.status}:"
+        label = _get_section_label(sg.status_normalizado, sg.status)
         items_text = _format_sub_group_items(sg)
-        sections.append(f"{header}\n\n{items_text}")
+        sections.append(f"{label}\n\n{items_text}")
 
     return "\n\n".join(sections)
 
@@ -84,7 +102,7 @@ def build_single_message(
     """
     # ── Multi-status: usa template dedicado ──
     if group.is_multi_status:
-        template_str = get_template_text("MULTI-STATUS", templates)
+        template_str = get_template_text("MULTI", templates)
 
         if not template_str:
             # Fallback caso o template MULTI-STATUS não esteja cadastrado
@@ -133,9 +151,9 @@ def build_single_message(
         rendered_blocks = []
         for it in group.itens:
             b = block_lines
-            b = re.sub(r'\{clientes?\}', it.empresa, b)
-            b = re.sub(r'\{cnpjs?\}', it.cnpj, b)
-            b = re.sub(r'\{datas?_expiracao\}', it.data_expiracao, b)
+            b = re.sub(r'\{clientes?\}', lambda _: it.empresa, b)
+            b = re.sub(r'\{cnpjs?\}', lambda _: it.cnpj, b)
+            b = re.sub(r'\{datas?_expiracao\}', lambda _: it.data_expiracao, b)
             rendered_blocks.append(b)
 
         replacement = "\n\n".join(rendered_blocks)

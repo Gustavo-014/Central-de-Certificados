@@ -2,3 +2,5 @@ streamlit>=1.38.0
 pandas>=2.2.0
 openpyxl>=3.1.0
 pyperclip>=1.8.2
+pyautogui>=0.9.54
+fpdf2>=2.8.0

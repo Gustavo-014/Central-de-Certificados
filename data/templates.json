@@ -19,7 +19,7 @@
     "descricao": "Cobrança de certificado digital expira hoje",
     "template": "Olá! Tudo bem?\n\nVerificamos que o Certificado Digital dos CNPJs expiram hoje.\n\nCliente: {clientes}\nCNPJ: {cnpjs}\nVencimento: {data_expiracao}\n\nA atualização das credenciais é fundamental para o sucesso das consultas.\n\nPara evitar qualquer interrupção, orientamos que as credenciais sejam atualizadas e incluídas na nossa plataforma até *HOJE*.\n\nSegue link de auxílio de como inserir o Certificado na plataforma:\nhttps://drive.google.com/file/d/12lZ05WHZ_eLwVy83iAw1VvQ9rumXSnnV/view?usp=sharing\n\nQualquer dúvida, é só nos chamar.\nFicamos à disposição!"
   },
-  "MULTI-STATUS": {
+  "MULTI": {
     "descricao": "Template usado quando o mesmo cliente possui certificados com status diferentes (multi-status)",
     "template": "Olá! Tudo bem?\n\nVerificamos pendências nos Certificados Digitais vinculados à sua conta.\n\n{secoes_status}\n\nA atualização das credenciais é fundamental para o sucesso das consultas.\n\nPara restabelecer as consultas, orientamos que as novas credenciais sejam atualizadas e incluídas na nossa plataforma o quanto antes.\n\nSegue link de auxílio de como inserir o Certificado na plataforma:\nhttps://drive.google.com/file/d/12lZ05WHZ_eLwVy83iAw1VvQ9rumXSnnV/view?usp=sharing\n\nQualquer dúvida, é só nos chamar.\nFicamos à disposição!"
   }
