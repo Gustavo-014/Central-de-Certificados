@@ -205,11 +205,9 @@ st.markdown(
 )
 
 # ── Abas ──────────────────────────────────────────────────────────────────────
-tab_mensagens, tab_grupos, tab_templates, tab_ajuda = st.tabs([
+tab_mensagens, tab_grupos = st.tabs([
     "Mensagens",
     "WhatsApp",
-    "Templates",
-    "Instruções",
 ])
 
 with tab_mensagens:
@@ -340,7 +338,7 @@ with tab_mensagens:
                             "**Status Não Configurados Encontrados na Planilha!**\n\n"
                             "Os seguintes valores de status não possuem template configurado:\n\n"
                             + "\n".join([f"- `{st_desc}`" for st_desc in result.status_desconhecidos])
-                            + "\n\n*Você pode configurar novos templates para esses status na aba 'Templates'.*"
+                            + "\n\n*Entre em contato com o suporte para configurar novos templates para esses status.*"
                         )
 
                     # Alertas de Registros Incompletos / Problemáticos
@@ -444,12 +442,10 @@ with tab_mensagens:
                                 badges_status_html += f'<span class="status-badge {st_badge_class}">Status: {st_item}</span> '
 
                             venc_card = "Datas diferentes" if msg.get("tem_datas_diferentes") else msg["data_expiracao"]
-                            tag_multi = " · MULTI-STATUS" if msg.get("is_multi_status") else ""
-                            tag_grupo = f"  ·  {nome_grupo_alvo}" if nome_grupo_alvo else ""
                             if is_enviado:
-                                titulo_card = f"[ENVIADO]  {msg['nome_conta']}{tag_multi}  ·  Venc: {venc_card}  ·  {msg['quantidade_cnpjs']} CNPJ(s){tag_grupo}"
+                                titulo_card = f"[ENVIADO]  {msg['nome_conta']}"
                             else:
-                                titulo_card = f"{msg['nome_conta']}{tag_multi}  ·  Venc: {venc_card}  ·  {msg['quantidade_cnpjs']} CNPJ(s){tag_grupo}"
+                                titulo_card = msg['nome_conta']
 
                             with st.expander(titulo_card, expanded=not is_enviado):
                                 badge_enviado_html = (
@@ -739,119 +735,4 @@ with tab_grupos:
         st.caption("Nenhum grupo encontrado com o termo pesquisado.")
 
 
-# Aba de Gerenciador de Templates
-with tab_templates:
-    st.markdown(
-        f'<div class="section-heading"><div class="sh-icon">{_ICON["gear"]}</div>Gerenciamento de Templates por Status</div>',
-        unsafe_allow_html=True
-    )
-    st.caption(
-        "Edite os textos das mensagens ou cadastre novos templates associados ao 'status do fluxo'. "
-        "As alterações são salvas e aplicadas imediatamente."
-    )
-
-    templates_atuais = st.session_state.templates
-
-    col_t_sel, col_t_actions = st.columns([2, 1])
-
-    status_options = list(templates_atuais.keys())
-    status_escolhido = col_t_sel.selectbox("Selecione o Status para visualizar/editar:", status_options)
-
-    if status_escolhido:
-        t_data = templates_atuais[status_escolhido]
-        t_desc = t_data.get("descricao", "") if isinstance(t_data, dict) else ""
-        t_corpo = t_data.get("template", "") if isinstance(t_data, dict) else str(t_data)
-
-        nova_desc = st.text_input("Descrição amigável do status:", value=t_desc, key="edit_desc")
-        novo_corpo = st.text_area(
-            "Texto do Template (Placeholders disponíveis: {clientes}, {cnpjs}, {data_expiracao}, {nome_conta}, {secoes_status}):",
-            value=t_corpo,
-            height=280,
-            key="edit_corpo"
-        )
-
-        col_salvar, col_delete = st.columns([1, 4])
-        with col_salvar:
-            if st.button("Salvar Alterações", key="btn_salvar_template", use_container_width=True):
-                st.session_state.templates[status_escolhido] = {
-                    "descricao": nova_desc,
-                    "template": novo_corpo
-                }
-                save_templates(st.session_state.templates)
-                st.success(f"Template '{status_escolhido}' atualizado com sucesso!")
-                st.rerun()
-
-    st.markdown("---")
-    with st.expander("Cadastrar Novo Status / Template", expanded=False):
-        novo_status_nome = st.text_input("Nome Exato do Status do Fluxo (conforme vem na planilha):", key="novo_st_nome")
-        novo_status_desc = st.text_input("Descrição amigável:", key="novo_st_desc")
-        novo_status_template = st.text_area(
-            "Texto do Template:",
-            value="Olá! Tudo bem?\n\nVerificamos que o Certificado Digital dos CNPJs expiram em breve.\n\n{clientes}\n{cnpjs}\n{data_expiracao}\n\nA atualização das credenciais é fundamental para o sucesso das consultas.\n\nPara restabelecer as consultas, orientamos que as novas credenciais sejam atualizadas e incluídas na nossa plataforma o quanto antes.\n\nSegue link de auxílio de como inserir o Certificado na plataforma:\nhttps://drive.google.com/file/d/12lZ05WHZ_eLwVy83iAw1VvQ9rumXSnnV/view?usp=sharing\n\nQualquer dúvida, é só nos chamar.\nFicamos à disposição!",
-            height=200,
-            key="novo_st_template"
-        )
-
-        if st.button("Cadastrar Novo Template", key="btn_cadastrar_novo"):
-            if not novo_status_nome.strip():
-                st.error("Informe o nome do status.")
-            else:
-                st.session_state.templates[novo_status_nome.strip()] = {
-                    "descricao": novo_status_desc.strip(),
-                    "template": novo_status_template.strip()
-                }
-                save_templates(st.session_state.templates)
-                st.success(f"Novo status '{novo_status_nome}' cadastrado com sucesso!")
-                st.rerun()
-
-# Aba de Ajuda e Instruções
-with tab_ajuda:
-    st.markdown(
-        f'<div class="section-heading"><div class="sh-icon">{_ICON["info"]}</div>Regras de Funcionamento e Formato da Planilha</div>',
-        unsafe_allow_html=True
-    )
-    st.markdown(
-        """
-        **1. Colunas Obrigatórias da Planilha:**
-        A planilha importada deve conter obrigatoriamente estas 5 colunas:
-        - `Nome da Conta`
-        - `Empresa`
-        - `CNPJ`
-        - `Certificado Expira em`
-        - `status do fluxo`
-
-        *Todas as demais colunas existentes na planilha são ignoradas.*
-
-        ---
-
-        **2. Regra de Negócio do Status:**
-        - Registros com status exatamente igual a `CERTIFICADO OK` são **desconsiderados** e não geram mensagem.
-        - Registros com outros status geram mensagens baseadas nos templates cadastrados.
-        - Se o mesmo cliente tiver status diferentes, é gerada uma **única mensagem unificada** utilizando o template `MULTI-STATUS`.
-        - Se surgir algum status na planilha que não esteja cadastrado, ele será apontado na tela para que você possa cadastrar o template correspondente.
-
-        ---
-
-        **3. Agrupamento:**
-        - O agrupamento de registros é feito por **Nome da Conta**, mantendo todos os CNPJs e status do mesmo cliente na mesma mensagem.
-        - **Status Único:** Se todos os CNPJs da conta compartilham o mesmo status, o template específico daquele status é utilizado.
-        - **Multi-Status:** Se a mesma conta tiver certificados com status diferentes (ex: um vencendo em 5 dias e outro já expirado), os CNPJs são organizados em seções separadas por status dentro da mesma mensagem usando o template `MULTI-STATUS`.
-        - Caso a conta tenha certificados vencendo em **datas diferentes**, o vencimento de cada um é detalhado abaixo do CNPJ:
-          ```
-          Cliente: Nome da Empresa
-          CNPJ: 00.000.000/0001-00
-          Vencimento: DD/MM/AAAA
-          ```
-
-        ---
-
-        **4. Placeholders dos Templates:**
-        - `{secoes_status}`: Usado no template MULTI-STATUS para inserir os blocos organizados por seção de status.
-        - `{clientes}`: Lista das empresas/clientes, um por linha.
-        - `{cnpjs}`: Lista dos CNPJs formatados, um por linha.
-        - `{data_expiracao}`: Lista das datas de vencimento (`DD/MM/AAAA`), uma por linha correspondente a cada cliente/CNPJ.
-        - `{nome_conta}`: Nome da conta principal do cliente.
-        - `{clientes_cnpjs}`: Lista dos pares no formato legado (Cliente / CNPJ).
-        """
-    )
 
